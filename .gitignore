@@ -1,0 +1,20 @@
+# 캡처 산출물 (스크린샷)
+*.png
+.design-bounce/
+.design-bounce/shots/
+
+# 의존성
+node_modules/
+
+# 로그 / 임시
+*.log
+tmp/
+.tmp/
+
+# macOS
+.DS_Store
+
+# 에디터
+.vscode/
+.idea/
+*.swp

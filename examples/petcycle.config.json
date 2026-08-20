@@ -1,0 +1,40 @@
+{
+  "adapter": "rn-expo",
+  "scheme": "petcycle",
+  "bundleId": "com.petcycletest.app",
+  "simulator": "iPhone 16 Pro",
+  "tokens": "src/theme/tokens.ts",
+  "captureDir": ".design-bounce/shots",
+  "screens": {
+    "home": {
+      "deeplink": "petcycle://home",
+      "route": "app/(tabs)/home.tsx",
+      "before": "design/_shot_finch_home.png",
+      "settleMs": 600
+    },
+    "tasks": {
+      "deeplink": "petcycle://tasks",
+      "route": "app/(tabs)/tasks.tsx",
+      "before": "design/_shot_finch_tasks.png",
+      "settleMs": 600
+    },
+    "pets": {
+      "deeplink": "petcycle://pets",
+      "route": "app/(tabs)/pets.tsx",
+      "before": "design/_shot_finch_pets.png",
+      "settleMs": 600
+    },
+    "ranking": {
+      "deeplink": "petcycle://ranking",
+      "route": "app/(tabs)/ranking.tsx",
+      "before": "design/_shot_finch_ranking.png",
+      "settleMs": 600
+    },
+    "settings": {
+      "deeplink": "petcycle://settings",
+      "route": "app/settings.tsx",
+      "before": "design/_shot_finch_settings.png",
+      "settleMs": 600
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/design-bounce/config.schema.json",
+  "title": "design-bounce.config.json",
+  "description": "design-bounce 프로젝트 설정 스키마. 어댑터, 빌드 스킴, 대상 화면 매핑을 정의한다.",
+  "type": "object",
+  "required": ["adapter", "scheme", "screens"],
+  "additionalProperties": false,
+  "properties": {
+    "adapter": {
+      "type": "string",
+      "description": "사용할 플랫폼 어댑터 식별자 (예: rn-expo)."
+    },
+    "scheme": {
+      "type": "string",
+      "description": "빌드/딥링크 URL 스킴 (예: petcycle)."
+    },
+    "bundleId": {
+      "type": "string",
+      "description": "앱 번들 식별자 (예: com.petcycletest.app)."
+    },
+    "simulator": {
+      "type": "string",
+      "description": "대상 시뮬레이터 이름 (예: iPhone 16 Pro)."
+    },
+    "tokens": {
+      "type": "string",
+      "description": "디자인 토큰 소스 파일 경로 (예: src/theme/tokens.ts)."
+    },
+    "captureDir": {
+      "type": "string",
+      "description": "스크린샷 캡처 결과 저장 디렉터리 (예: .design-bounce/shots)."
+    },
+    "screens": {
+      "type": "object",
+      "description": "화면 id → 화면 정의 매핑. 각 화면의 딥링크/라우트/출발점 시안을 기술한다.",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["deeplink", "route"],
+        "additionalProperties": false,
+        "properties": {
+          "deeplink": {
+            "type": "string",
+            "description": "화면으로 이동하는 딥링크 URL (예: petcycle://home)."
+          },
+          "route": {
+            "type": "string",
+            "description": "화면 소스 라우트 파일 경로 (예: app/(tabs)/home.tsx)."
+          },
+          "before": {
+            "type": "string",
+            "description": "개선 출발점(슬롭) 스크린샷 경로. 기준(진실의 원천)이 아니라 시작점일 뿐이다."
+          },
+          "settleMs": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "네비게이션 후 캡처 전 대기 시간(ms)."
+          },
+          "ref": {
+            "type": "string",
+            "description": "진실의 원천 시안 경로(선택). 런타임 Design Phase에서 확보되므로 config 필수 아님."
+          }
+        }
+      }
+    }
+  }
+}
