@@ -57,16 +57,38 @@ Screenshot 루프: Dev 구현 → adapter(build/launch/navigate/capture)
 
 ## 설치
 
-채택 프로젝트에 다음을 배선한다.
+### 1. 스킬로 설치 (전역)
 
-1. 프로젝트 루트에 `design-bounce.config.json`을 둔다 (`config.schema.json` 준수, `examples/petcycle.config.json` 참고).
-2. 플랫폼 어댑터를 선택한다 (현재: `rn-expo`).
-3. `hooks/install.md`를 따라 `spec-gate.sh` / `screenshot-gate.sh`를 프로젝트 `settings.json`의 `PreToolUse`에 배선한다.
+`/design-bounce` 스킬로 어느 프로젝트에서든 쓰려면 레포를 클론하고 `install.sh`를 실행한다. `~/.claude/skills/design-bounce` 심링크가 생성된다.
 
-의존성:
+```bash
+git clone https://github.com/Gooreum/design-bounce ~/Code/design-bounce && cd ~/Code/design-bounce && ./install.sh
+```
 
-- `jq` — config / state JSON 파싱.
-- `rn-expo` 어댑터: Xcode 커맨드라인 툴(`xcrun simctl`), Node / `npx expo`.
+**새 세션**을 시작하면 `/design-bounce`가 활성화된다.
+
+- **업데이트**: 심링크 설치라서 `cd ~/Code/design-bounce && git pull`만 하면 최신 반영. 재설치 불필요.
+- `--copy`: 심링크 대신 복사본으로 설치한다 (레포 위치를 옮기거나 지워도 스킬이 남아야 할 때). 이 경우 업데이트하려면 다시 `./install.sh --copy --force`.
+- `--force`: `~/.claude/skills/design-bounce`에 다른 항목이 이미 있을 때 제거 후 재설치한다.
+
+`install.sh`는 동일 레포를 가리키는 심링크가 이미 있으면 그대로 성공(idempotent)하고, 끝에 `SKILL.md` 존재를 확인해 설치를 검증한다.
+
+### 2. 프로젝트에 훅 강제 배선 (선택)
+
+특정 프로젝트에서 게이트 훅(`spec-gate` / `screenshot-gate`)까지 강제하려면 채택 프로젝트에 다음을 배선한다.
+
+1. design-bounce를 프로젝트에 둔다 (전역 클론 재사용, 또는 `git submodule add https://github.com/Gooreum/design-bounce`).
+2. 프로젝트 루트에 `design-bounce.config.json`을 둔다 (`config.schema.json` 준수, `examples/petcycle.config.json` 참고).
+3. 플랫폼 어댑터를 선택한다 (현재: `rn-expo`).
+4. `hooks/install.md`를 따라 `spec-gate.sh` / `screenshot-gate.sh`를 프로젝트 `settings.json`의 `PreToolUse`에 배선한다.
+
+### 의존성
+
+- `jq` — config / state JSON 파싱 (훅·어댑터 런타임). `brew install jq`.
+- Xcode 커맨드라인 툴(`xcrun simctl`) — `rn-expo` 어댑터(macOS)에 필요.
+- `node` / `npx expo` — `rn-expo` build에 필요.
+
+`install.sh`는 위 의존성이 없으면 경고만 출력하고 설치는 계속한다.
 
 ## 사용법
 

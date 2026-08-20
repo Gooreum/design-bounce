@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # run.sh — design-bounce harness 마스터 테스트 러너
 #
-# CWD와 무관하게 자기 위치 기준으로 repo 루트를 찾아 아래 5개 섹션을 순서대로 실행한다:
+# CWD와 무관하게 자기 위치 기준으로 repo 루트를 찾아 아래 6개 섹션을 순서대로 실행한다:
 #   1. JSON 유효성 (jq)      : config.schema.json + examples/petcycle.config.json 파싱
 #   2. bash 문법 (bash -n)   : adapters/hooks/test 모든 .sh
 #   3. 훅 유닛테스트          : test/test-hooks.sh
 #   4. 어댑터 dry-run         : test/test-adapter.sh
-#   5. 내용 존재 (grep)       : knowledge/*.md + SKILL.md 필수 문자열
+#   5. 설치 유닛테스트        : test/test-install.sh
+#   6. 내용 존재 (grep)       : knowledge/*.md + SKILL.md 필수 문자열
 #
 # 각 섹션 PASS/FAIL 출력. 하나라도 실패면 exit 1, 전부 통과면 "ALL PASS" + exit 0.
 set -u
@@ -80,9 +81,19 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 5. 내용 존재 (grep)
+# 5. 설치 유닛테스트
 # ---------------------------------------------------------------------------
-section "5. 내용 존재 (grep)"
+section "5. 설치 유닛테스트 (test-install.sh)"
+if bash "$REPO/test/test-install.sh"; then
+  report "test-install.sh" 0
+else
+  report "test-install.sh" 1
+fi
+
+# ---------------------------------------------------------------------------
+# 6. 내용 존재 (grep)
+# ---------------------------------------------------------------------------
+section "6. 내용 존재 (grep)"
 
 grep_any() {
   # $1 라벨  $2 문자열  $3.. 파일들 — 하나라도 매치하면 PASS
