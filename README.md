@@ -90,6 +90,40 @@ git clone https://github.com/Gooreum/design-bounce ~/Code/design-bounce && cd ~/
 
 `install.sh`는 위 의존성이 없으면 경고만 출력하고 설치는 계속한다.
 
+## 업데이트
+
+설치 방식에 따라 최신화 방법이 다르다.
+
+### 심링크 설치 (기본)
+
+레포를 그대로 심링크하므로 레포만 최신화하면 스킬도 갱신된다.
+
+```bash
+cd ~/Code/design-bounce
+./install.sh --update    # git pull --ff-only (upstream 자동 감지)
+./install.sh --version   # 현재 커밋 SHA + origin 대비 뒤처짐 확인
+```
+
+`--version`은 `fetch` 후 origin이 몇 커밋 앞섰는지 표시하고, 뒤처졌으면 `--update`를 안내한다. `--update`는 `git pull`과 동일하게 동작한다. 갱신 내용은 **새 세션부터** 반영된다.
+
+### --copy 설치
+
+복사본이라 레포 최신화만으론 반영되지 않는다. 레포를 pull한 뒤 강제 재설치한다.
+
+```bash
+cd ~/Code/design-bounce && git pull
+./install.sh --copy --force
+```
+
+### submodule 설치
+
+프로젝트 submodule로 둔 경우 detached HEAD 상태라 `--update`가 부모 레포용 안내를 출력한다. 부모 레포에서 서브모듈 포인터를 옮긴다.
+
+```bash
+git submodule update --remote tools/design-bounce
+git add tools/design-bounce && git commit -m "chore: design-bounce 업데이트"
+```
+
 ## 사용법
 
 1. **Design Phase 실행** — SKILL.md 워크플로우로 명세를 생성하고 승인받는다.
