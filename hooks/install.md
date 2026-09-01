@@ -4,10 +4,11 @@ design-bounce의 강제 게이트 훅을 **채택 프로젝트**(예: PetCycle)�
 두 훅은 채택 프로젝트가 코드를 아무렇게나 갈아엎는 것을 막는 안전장치다:
 
 - **ref-gate.sh** — 「무엇을 보고 만들었나」가 없으면 소스 수정을 막는다.
+- **sample-gate.sh** — 샘플을 그림으로 보이고 승인받기 전에는 전수 작업을 막는다.
 - **spec-gate.sh** — design-spec 승인 전에는 소스 수정을 막는다.
 - **screenshot-gate.sh** — 직전 step의 스크린샷/판정 아티팩트가 없으면 다음 step을 막는다.
 
-셋 다 Claude Code의 `PreToolUse` 이벤트에 `Write|Edit` matcher로 배선한다.
+넷 다 Claude Code의 `PreToolUse` 이벤트에 `Write|Edit` matcher로 배선한다.
 훅이 `{"decision":"block", ...}` JSON을 stdout에 출력하면 해당 도구 호출이 차단된다.
 
 ---
@@ -16,7 +17,7 @@ design-bounce의 강제 게이트 훅을 **채택 프로젝트**(예: PetCycle)�
 
 - `jq` 설치 (`brew install jq`)
 - 채택 프로젝트 루트에 design-bounce가 관리하는 `.design-bounce/state.json` 존재
-  (state 파일이 없으면 세 훅 모두 **통과** — design-bounce 미사용 프로젝트에 영향 없음)
+  (state 파일이 없으면 네 훅 모두 **통과** — design-bounce 미사용 프로젝트에 영향 없음)
 
 ## 1. 훅 스크립트 배치
 
@@ -28,11 +29,12 @@ design-bounce 레포를 채택 프로젝트에서 참조할 수 있는 위치에
 
 ```bash
 chmod +x tools/design-bounce/hooks/ref-gate.sh \
+         tools/design-bounce/hooks/sample-gate.sh \
          tools/design-bounce/hooks/spec-gate.sh \
          tools/design-bounce/hooks/screenshot-gate.sh
 ```
 
-> 세 훅 모두 같은 디렉토리의 `lib/state.sh`를
+> 네 훅 모두 같은 디렉토리의 `lib/state.sh`를
 > `source`하므로 `hooks/lib/state.sh`가 함께 있어야 한다.
 
 ## 2. `.claude/settings.json`에 PreToolUse 배선
@@ -50,6 +52,10 @@ chmod +x tools/design-bounce/hooks/ref-gate.sh \
           {
             "type": "command",
             "command": "tools/design-bounce/hooks/ref-gate.sh"
+          },
+          {
+            "type": "command",
+            "command": "tools/design-bounce/hooks/sample-gate.sh"
           },
           {
             "type": "command",
@@ -92,6 +98,9 @@ design-bounce 워크플로우(SKILL.md)가 이 파일을 생성/갱신한다. �
 | `spec_approved` | bool | `true` \| `false` | design-spec을 사용자가 승인했는지 |
 | `current_step` | int | `0`, `1`, `2`, ... | 루프의 현재 step 번호(1부터). 아직 시작 안 했으면 0 |
 | `current_target` | string | `"캐러멜"` 등 | 지금 만들고 있는 대상. 비어 있으면 ref-gate는 강제하지 않는다 |
+| `sample_approved` | bool | `true` \| `false` | 의도 시트를 사용자가 승인했는지 |
+| `sample_size` | int | 기본 `5` | 샘플 단계에서 만들 대상 수. 3~5개를 권장한다 |
+| `targets_done_count` | int | `0`, `1`, ... | 지금까지 만든 대상 수. 샘플 단계에서 정원을 넘으면 막힌다 |
 
 예시:
 
@@ -99,6 +108,9 @@ design-bounce 워크플로우(SKILL.md)가 이 파일을 생성/갱신한다. �
 {
   "phase": "sample",
   "spec_approved": true,
+  "sample_approved": false,
+  "sample_size": 5,
+  "targets_done_count": 2,
   "current_step": 2,
   "current_target": "캐러멜"
 }
@@ -116,6 +128,16 @@ design-bounce 워크플로우(SKILL.md)가 이 파일을 생성/갱신한다. �
 > 이 훅은 **내용을 판정하지 않는다. 파일이 있냐 없냐만 본다.**
 > 판정을 넣는 순간 구현하는 쪽이 통과 기준을 다시 쓸 수 있게 되고,
 > 그러면 게이트가 아니라 자기 채점이 된다.
+
+### sample-gate.sh
+- state 파일 없음 → 통과
+- `phase="sample"` & `targets_done_count >= sample_size` → **차단** (의도 시트를 먼저 내라)
+- `phase="bulk"` & `sample_approved != "true"` → **차단** (승인 없이 전수 금지)
+- 그 외 → 통과
+
+> 결과물을 판정하지 않는다. **개수와 플래그만** 본다.
+> `sample_size`/`targets_done_count` 에 숫자 아닌 값이 들어와도 훅이 죽지 않는다 —
+> 게이트가 죽으면 「그냥 통과」가 되기 때문이다.
 
 ### spec-gate.sh
 - state 파일 없음 → 통과

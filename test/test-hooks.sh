@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# test-hooks.sh — spec-gate.sh / screenshot-gate.sh / ref-gate.sh 유닛테스트
+# test-hooks.sh — spec-gate / screenshot-gate / ref-gate / sample-gate 유닛테스트
 #
 # 각 케이스마다 임시 state 디렉토리(mktemp -d)를 만들고 DESIGN_BOUNCE_DIR로
 # 지정한 뒤 훅을 실행하여 stdout/exit code를 assert 한다.
@@ -11,6 +11,7 @@ REPO="$(cd "$HERE/.." && pwd)"
 SPEC_GATE="$REPO/hooks/spec-gate.sh"
 SHOT_GATE="$REPO/hooks/screenshot-gate.sh"
 REF_GATE="$REPO/hooks/ref-gate.sh"
+SAMPLE_GATE="$REPO/hooks/sample-gate.sh"
 FIXTURES="$HERE/fixtures"
 
 PASS=0
@@ -134,6 +135,46 @@ check "ref-gate: 대상 미지정 → 통과" 0 "" "$EC" "$OUT"
 SD=$(new_state_dir); mkdir -p "$SD"
 OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$REF_GATE"); EC=$?
 check "ref-gate: state 없음 → 통과" 0 "" "$EC" "$OUT"
+
+# ---------------------------------------------------------------------------
+# sample-gate 케이스 — 샘플 승인 없이 전수로 넘어가는 것을 막는다
+# ---------------------------------------------------------------------------
+
+# TC-11: phase=bulk & 샘플 미승인 → block
+SD=$(new_state_dir); mkdir -p "$SD"
+cp "$FIXTURES/state-bulk-unapproved.json" "$SD/state.json"
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SAMPLE_GATE"); EC=$?
+check "sample-gate: 전수 & 미승인 → block" 0 '"decision":"block"' "$EC" "$OUT"
+
+# TC-12: phase=sample & 샘플 정원을 다 채움 → block (시트를 먼저 내라)
+SD=$(new_state_dir); mkdir -p "$SD"
+cp "$FIXTURES/state-sample-full.json" "$SD/state.json"
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SAMPLE_GATE"); EC=$?
+check "sample-gate: 샘플 정원 초과 → block" 0 '"decision":"block"' "$EC" "$OUT"
+
+# TC-13: phase=sample & 아직 여유 있음 → 통과
+SD=$(new_state_dir); mkdir -p "$SD"
+cp "$FIXTURES/state-sample-room.json" "$SD/state.json"
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SAMPLE_GATE"); EC=$?
+check "sample-gate: 샘플 여유 → 통과" 0 "" "$EC" "$OUT"
+
+# TC-14: phase=bulk & 샘플 승인됨 → 통과
+SD=$(new_state_dir); mkdir -p "$SD"
+cp "$FIXTURES/state-bulk-approved.json" "$SD/state.json"
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SAMPLE_GATE"); EC=$?
+check "sample-gate: 전수 & 승인 → 통과" 0 "" "$EC" "$OUT"
+
+# TC-15: 숫자여야 할 필드에 쓰레기가 들어와도 훅이 죽지 않는다
+#        (게이트가 죽으면 «그냥 통과»가 되므로 방어가 필요하다)
+SD=$(new_state_dir); mkdir -p "$SD"
+printf '{"phase":"sample","sample_size":"다섯","targets_done_count":"둘"}' > "$SD/state.json"
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SAMPLE_GATE"); EC=$?
+check "sample-gate: 숫자 아닌 값 → 죽지 않고 통과" 0 "" "$EC" "$OUT"
+
+# TC-16: state 파일 없음 → 통과
+SD=$(new_state_dir); mkdir -p "$SD"
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SAMPLE_GATE"); EC=$?
+check "sample-gate: state 없음 → 통과" 0 "" "$EC" "$OUT"
 
 # ---------------------------------------------------------------------------
 # 결과 집계
