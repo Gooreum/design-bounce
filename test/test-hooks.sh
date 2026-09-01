@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# test-hooks.sh — spec-gate.sh / screenshot-gate.sh 유닛테스트
+# test-hooks.sh — spec-gate.sh / screenshot-gate.sh / ref-gate.sh 유닛테스트
 #
 # 각 케이스마다 임시 state 디렉토리(mktemp -d)를 만들고 DESIGN_BOUNCE_DIR로
 # 지정한 뒤 훅을 실행하여 stdout/exit code를 assert 한다.
@@ -10,6 +10,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/.." && pwd)"
 SPEC_GATE="$REPO/hooks/spec-gate.sh"
 SHOT_GATE="$REPO/hooks/screenshot-gate.sh"
+REF_GATE="$REPO/hooks/ref-gate.sh"
 FIXTURES="$HERE/fixtures"
 
 PASS=0
@@ -96,6 +97,43 @@ printf 'PNG' > "$SD/steps/step-1/after.png"
 printf '# verdict\npass\n' > "$SD/steps/step-1/verdict.md"
 OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SHOT_GATE"); EC=$?
 check "screenshot-gate: step-1 아티팩트 있음 → 통과" 0 "" "$EC" "$OUT"
+
+# ---------------------------------------------------------------------------
+# ref-gate 케이스 — 「무엇을 보고 만들었나」가 없으면 막는다
+# ---------------------------------------------------------------------------
+
+# TC-6: current_target 은 있는데 ref 디렉토리 자체가 없음 → block
+SD=$(new_state_dir); mkdir -p "$SD"
+cp "$FIXTURES/state-target-caramel.json" "$SD/state.json"
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$REF_GATE"); EC=$?
+check "ref-gate: 레퍼런스 없음 → block" 0 '"decision":"block"' "$EC" "$OUT"
+
+# TC-7: 이미지는 있는데 intent.md 가 없음 → block
+#       (사진만 내려받고 «보지» 않은 상태를 막는다)
+SD=$(new_state_dir); mkdir -p "$SD/ref/캐러멜"
+cp "$FIXTURES/state-target-caramel.json" "$SD/state.json"
+printf 'PNG' > "$SD/ref/캐러멜/box.png"
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$REF_GATE"); EC=$?
+check "ref-gate: intent.md 없음 → block" 0 '"decision":"block"' "$EC" "$OUT"
+
+# TC-8: 이미지 + intent.md 둘 다 있음 → 통과
+SD=$(new_state_dir); mkdir -p "$SD/ref/캐러멜"
+cp "$FIXTURES/state-target-caramel.json" "$SD/state.json"
+printf 'PNG' > "$SD/ref/캐러멜/box.png"
+printf '# 캐러멜\n- 살릴 것: 길쭉한 갑\n' > "$SD/ref/캐러멜/intent.md"
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$REF_GATE"); EC=$?
+check "ref-gate: 사진+intent.md → 통과" 0 "" "$EC" "$OUT"
+
+# TC-9: current_target 미지정 → 통과 (레퍼런스 «수집» 자체를 막으면 안 된다)
+SD=$(new_state_dir); mkdir -p "$SD"
+cp "$FIXTURES/state-no-target.json" "$SD/state.json"
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$REF_GATE"); EC=$?
+check "ref-gate: 대상 미지정 → 통과" 0 "" "$EC" "$OUT"
+
+# TC-10: state 파일 없음 → 통과
+SD=$(new_state_dir); mkdir -p "$SD"
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$REF_GATE"); EC=$?
+check "ref-gate: state 없음 → 통과" 0 "" "$EC" "$OUT"
 
 # ---------------------------------------------------------------------------
 # 결과 집계
