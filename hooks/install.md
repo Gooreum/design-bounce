@@ -101,6 +101,7 @@ design-bounce 워크플로우(SKILL.md)가 이 파일을 생성/갱신한다. �
 | `sample_approved` | bool | `true` \| `false` | 의도 시트를 사용자가 승인했는지 |
 | `sample_size` | int | 기본 `5` | 샘플 단계에서 만들 대상 수. 3~5개를 권장한다 |
 | `targets_done_count` | int | `0`, `1`, ... | 지금까지 만든 대상 수. 샘플 단계에서 정원을 넘으면 막힌다 |
+| `sheet_sent` | bool | `true` \| `false` | 의도 시트를 사용자에게 보냈는지. 보낸 뒤에는 샘플 재작업이 열린다 |
 
 예시:
 
@@ -131,7 +132,10 @@ design-bounce 워크플로우(SKILL.md)가 이 파일을 생성/갱신한다. �
 
 ### sample-gate.sh
 - state 파일 없음 → 통과
-- `phase="sample"` & `targets_done_count >= sample_size` → **차단** (의도 시트를 먼저 내라)
+- `phase="sample"` & `targets_done_count >= sample_size` & `sheet_sent != "true"`
+  → **차단** (의도 시트를 먼저 내라)
+  시트를 낸 뒤(`sheet_sent=true`)에는 지적받은 칸을 다시 만들 수 있다 —
+  그게 reject 경로에서 이 워크플로우가 시키는 일이다
 - `phase="bulk"` & `sample_approved != "true"` → **차단** (승인 없이 전수 금지)
 - 그 외 → 통과
 

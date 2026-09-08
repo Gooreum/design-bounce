@@ -152,6 +152,13 @@ cp "$FIXTURES/state-sample-full.json" "$SD/state.json"
 OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SAMPLE_GATE"); EC=$?
 check "sample-gate: 샘플 정원 초과 → block" 0 '"decision":"block"' "$EC" "$OUT"
 
+# TC-12b: phase=sample & 정원을 채웠지만 «시트를 이미 냈다» → 통과
+#         지적받은 칸을 다시 만드는 것은 이 워크플로우가 시키는 일이다
+SD=$(new_state_dir); mkdir -p "$SD"
+cp "$FIXTURES/state-sample-sheet-sent.json" "$SD/state.json"
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SAMPLE_GATE"); EC=$?
+check "sample-gate: 시트 낸 뒤 재작업 → 통과" 0 "" "$EC" "$OUT"
+
 # TC-13: phase=sample & 아직 여유 있음 → 통과
 SD=$(new_state_dir); mkdir -p "$SD"
 cp "$FIXTURES/state-sample-room.json" "$SD/state.json"

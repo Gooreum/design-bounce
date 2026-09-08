@@ -9,9 +9,16 @@
 #
 # 채택 프로젝트 루트의 `.design-bounce/state.json`을 읽는다:
 #   - state 파일 없음                                    → 통과
-#   - phase="sample" & targets_done_count >= sample_size → 차단 (시트를 먼저 내라)
-#   - phase="bulk"   & sample_approved != "true"         → 차단 (승인 없이 전수 금지)
-#   - 그 외                                              → 통과
+#   - phase="sample" & targets_done_count >= sample_size & sheet_sent != "true"
+#         → 차단 (샘플을 다 만들었으니 시트를 먼저 내라)
+#   - phase="bulk"   & sample_approved != "true"
+#         → 차단 (승인 없이 전수 금지)
+#   - 그 외 → 통과
+#
+# `sheet_sent` 를 보는 이유: 처음엔 개수만 봤는데, 그러면 **시트를 낸 뒤에
+# 지적받은 칸을 다시 만드는 것까지 막혔다.** 그건 이 워크플로우가 시키는 일이다
+# (reject → 지적된 칸만 다시 만들어 재발송). 차단 사유가 「시트를 먼저 내라」인데
+# 시트를 낸 뒤에도 계속 막는 건 대리 지표만 보고 실제 조건을 안 본 것이다.
 #
 # **이 훅은 결과물을 판정하지 않는다. 개수와 플래그만 본다.**
 # 판정을 넣는 순간 구현하는 쪽이 통과 기준을 다시 쓸 수 있게 된다.
@@ -27,6 +34,7 @@ db_state_exists || exit 0
 
 PHASE=$(db_state_field phase "")
 APPROVED=$(db_state_field sample_approved "false")
+SENT=$(db_state_field sheet_sent "false")
 SIZE=$(db_state_field sample_size "5")
 DONE=$(db_state_field targets_done_count "0")
 
@@ -34,7 +42,7 @@ DONE=$(db_state_field targets_done_count "0")
 case "$SIZE" in ''|*[!0-9]*) SIZE=5 ;; esac
 case "$DONE" in ''|*[!0-9]*) DONE=0 ;; esac
 
-if [ "$PHASE" = "sample" ] && [ "$DONE" -ge "$SIZE" ]; then
+if [ "$PHASE" = "sample" ] && [ "$DONE" -ge "$SIZE" ] && [ "$SENT" != "true" ]; then
   printf '{"decision":"block","reason":"샘플 %s개를 다 만들었습니다. intent-sheet 로 의도 시트를 뽑아 보내고 승인을 받은 뒤에 이어가세요."}\n' "$SIZE"
   exit 0
 fi
