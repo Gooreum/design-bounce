@@ -27,11 +27,13 @@ design-bounce 레포를 채택 프로젝트에서 참조할 수 있는 위치에
 
 ```bash
 chmod +x tools/design-bounce/hooks/spec-gate.sh \
-         tools/design-bounce/hooks/screenshot-gate.sh
+         tools/design-bounce/hooks/screenshot-gate.sh \
+         tools/design-bounce/hooks/verdict-summary.sh
 ```
 
 > `screenshot-gate.sh`/`spec-gate.sh`는 같은 디렉토리의 `lib/state.sh`를
-> `source`하므로 `hooks/lib/state.sh`가 함께 있어야 한다.
+> `source`하므로 `hooks/lib/state.sh`가 함께 있어야 한다. `screenshot-gate.sh`와
+> `verdict-summary.sh`는 `hooks/lib/verdict.sh`도 `source`한다.
 
 ## 2. `.claude/settings.json`에 PreToolUse 배선
 
@@ -109,7 +111,30 @@ design-bounce 워크플로우(SKILL.md)가 이 파일을 생성/갱신한다. �
 - `PREV = current_step - 1`이 1 이상이고
   `.design-bounce/steps/step-$PREV/after.png` 또는 `verdict.md`가 없음 → **차단**
   (`{"decision":"block","reason":"직전 step 스크린샷/판정 누락. 캡처+판정 후 진행."}`)
+- `verdict.md`가 `knowledge/verdict-template.md` 형식 위반 → **차단** (사유에 step·누락 항목·템플릿 경로)
+  - 첫 줄 요약 헤더 없음/형식 오류/빈 파일
+    (`{"decision":"block","reason":"step-1 verdict.md 형식 오류: 첫 줄 요약 헤더 없음 (...). knowledge/verdict-template.md 참고."}`)
+  - 필수 섹션(`## 잘된 점` / `## 트랙 A` / `## 트랙 B` / `## 정지 판단`) 누락
+    (`{"decision":"block","reason":"step-1 verdict.md 형식 오류: 필수 섹션 누락 (트랙 B). knowledge/verdict-template.md 참고."}`)
 - 그 외 → 통과
+
+### verdict-summary.sh (CLI, 배선 불필요)
+
+PreToolUse 훅이 아니라 정지조건 판단용 집계 도구다. `settings.json`에 배선하지 않고
+매 사이클 끝에 직접 실행한다.
+
+```bash
+tools/design-bounce/hooks/verdict-summary.sh [state_dir]   # 생략 시 DESIGN_BOUNCE_DIR 또는 .design-bounce
+# step-1  blockers=1 high=2 deviations=5  dirty
+# step-2  blockers=0 high=0 deviations=3  clean
+# step-3  blockers=0 high=0 deviations=3  clean
+# consecutive_clean: 2
+# deviation_trend: 5 -> 3 -> 3
+# status: success
+```
+
+- `status`: `success`(연속 clean 2회) / `plateau`(최근 3사이클 deviations 줄지 않음) / `continue` / `none`(verdict 없음)
+- 형식이 깨진 step은 `invalid`로 표시하고 연속 clean을 0으로 리셋한다. 항상 exit 0.
 
 ## 5. 배선 검증
 

@@ -89,7 +89,10 @@
 
 ## 판정 출력 계약
 
-각 판정(`verdict.md`)은 다음을 포함한다:
+각 판정(`verdict.md`)은 [`verdict-template.md`](verdict-template.md) 형식을 따른다.
+**첫 줄은 반드시 요약 헤더**(`blockers: N, high: N, medium: N, nit: N, deviations: N`)이며,
+헤더가 없거나 아래 섹션이 빠지면 `screenshot-gate.sh`가 다음 step을 차단한다.
+헤더 아래에 다음을 포함한다:
 1. **잘된 점** (인정) 1~N개.
 2. 트리아지 등급별 **발견 사항** — 각 항목에 문제·영향 + 스크린샷 증거.
 3. 트랙 A(명세 준수) / 트랙 B(외부표준 크리틱) 요약.

@@ -94,11 +94,16 @@ Step N:
      adapter.sh capture <id>     → <png경로>
   3. QA(Vision)가 스크린샷을 Read하여 2트랙 판정
   4. 편차를 트리아지하여 .design-bounce/steps/step-N/{after.png, verdict.md} 기록
-  5. Blocker/High-Priority가 있으면 재작업 → 다시 2로
+     (verdict.md는 knowledge/verdict-template.md 형식 — 첫 줄 요약 헤더 + 필수 섹션)
+  5. Blocker/High-Priority가 있으면 재작업 → 새 step 번호(N+1)로 다시 1로
 ```
 
-> `hooks/screenshot-gate.sh`는 직전 step의 `after.png`/`verdict.md` 아티팩트가 없으면
+> `hooks/screenshot-gate.sh`는 직전 step의 `after.png`/`verdict.md` 아티팩트가 없거나
+> verdict.md가 템플릿 형식(첫 줄 요약 헤더 + 필수 섹션)을 따르지 않으면
 > 다음 step 코드 수정을 **차단**한다. 캡처+판정 없이 전진할 수 없다.
+>
+> **재작업도 새 step 번호로 기록한다.** step 디렉토리 1개 = 판정 사이클 1개이며,
+> 정지조건 집계(`hooks/verdict-summary.sh`)는 step 디렉토리를 사이클 단위로 센다.
 
 ### 2트랙 판정 (판정자 = 구현자와 분리)
 
@@ -121,7 +126,8 @@ Step N:
 
 판정은 **"Problems over Prescriptions"** 원칙을 따른다: "margin을 16px로 바꿔라"(처방)가
 아니라 "간격이 12px/20px로 혼재해 리듬이 깨진다"(문제·영향)로 기술한다. 잘된 점도 먼저 인정한다.
-판정 결과는 `verdict.md`에 기록한다(잘된 점 + 등급별 발견사항 + 트랙 A/B 요약 + 정지 판단).
+판정 결과는 `verdict.md`에 `knowledge/verdict-template.md` 형식으로 기록한다
+(첫 줄 요약 헤더 `blockers: N, high: N, medium: N, nit: N, deviations: N` + 잘된 점 + 트랙 A/B + 정지 판단).
 
 **재작업 조건**: `[Blocker]` 또는 `[High-Priority]`가 하나라도 있으면 Dev가 재작업한다.
 
@@ -129,11 +135,13 @@ Step N:
 
 ## 정지조건
 
-루프는 무한히 돌지 않는다. 매 사이클 끝에 다음을 판단한다:
+루프는 무한히 돌지 않는다. 매 사이클 끝에 `hooks/verdict-summary.sh`를 실행하고,
+마지막 줄 `status:` 값(success / plateau / continue / none)으로 다음을 판단한다.
+stuck·infra-fail은 자동 집계하지 않으므로 수동 판단한다.
 
 | 조건 | 트리거 | 처리 |
 |---|---|---|
-| **success** | 2트랙 모두 clean(Blocker/High 0건)이 **2회 연속** | 해당 step 완료, 다음 step |
+| **success** | 2트랙 모두 clean(Blocker/High 0건)이 **2회 연속** | 해당 화면/변경 완료, 다음 작업 |
 | **plateau** | 편차 수가 **3사이클 동안 정체**(줄지 않음) | TODO로 남기고 사용자에게 보고 |
 | **stuck** | **동일 편차가 2회 실패** → 다른 접근 시도. **3회** 실패 → TODO로 남기고 전진 |
 | **infra-fail** | `build`/`capture` 등 어댑터 실패 | 1회 재시도 → 그래도 실패면 중단·보고 |
