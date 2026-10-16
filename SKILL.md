@@ -50,6 +50,10 @@ phase/step + 훅으로 구조화하듯, design-bounce는 "디자인 개발"을 *
 > ⚠️ **이 Phase에서는 소스 코드를 단 한 줄도 쓰지 않는다.** 명세를 만들고 승인받는 단계다.
 > 미승인 상태에서 소스 수정을 시도하면 `hooks/spec-gate.sh`가 차단한다.
 
+> 시작 전: 프로젝트 루트에 `.design-bounce/state.json`이 없으면 게이트가 꺼진 상태다.
+> 사용자에게 `~/.claude/skills/design-bounce/install.sh init --write` 실행을 안내한다
+> (config · state(phase=design) · 훅 배선을 한 번에 생성).
+
 주관("예쁘게")을 **객관적 명세**로 변환해 사용자에게 **선승인**받는다. 명세는 다음을 담는다:
 
 1. **구체 토큰값** — "파란색"이 아니라 `#2563EB`, "여백"이 아니라 `16px`(8px 그리드).
@@ -77,6 +81,7 @@ phase/step + 훅으로 구조화하듯, design-bounce는 "디자인 개발"을 *
 - 승인 후:
   1. 명세를 `.design-bounce/design-spec.md`에 저장.
   2. `.design-bounce/state.json` 업데이트: `phase`를 `design` → `loop`, `spec_approved=true`.
+  - `.design-bounce/` 아래 파일은 spec-gate가 미승인 상태에서도 Write/Edit를 허용하므로 위 두 단계는 Write 도구로 하면 된다.
 - 미승인 상태에서는 `hooks/spec-gate.sh`(PreToolUse: Write/Edit)가 소스 수정을 **차단**한다.
 
 ---

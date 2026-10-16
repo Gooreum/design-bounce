@@ -9,6 +9,18 @@ design-bounce의 강제 게이트 훅을 **채택 프로젝트**(예: PetCycle)�
 둘 다 Claude Code의 `PreToolUse` 이벤트에 `Write|Edit` matcher로 배선한다.
 훅이 `{"decision":"block", ...}` JSON을 stdout에 출력하면 해당 도구 호출이 차단된다.
 
+## 빠른 방법: `install.sh init --write`
+
+채택 프로젝트(Expo) 루트에서 아래 한 줄이면 config · state · 훅 배선이 끝난다:
+
+```bash
+~/.claude/skills/design-bounce/install.sh init --write
+```
+
+- `design-bounce.config.json` 생성(기존 보존), `.design-bounce/state.json`을 `phase=design`으로 초기화(기존 보존)
+- `.claude/settings.json`에 아래 2절의 훅을 **절대경로**로 병합(멱등, `.bak` 백업). `--write` 없이 실행하면 스니펫만 출력
+- 아래는 수동 배선 절차다.
+
 ---
 
 ## 사전 요구
@@ -36,7 +48,8 @@ chmod +x tools/design-bounce/hooks/spec-gate.sh \
 ## 2. `.claude/settings.json`에 PreToolUse 배선
 
 채택 프로젝트 루트의 `.claude/settings.json`(없으면 생성)에 아래를 추가한다.
-`command` 경로는 실제 배치 경로에 맞게 수정한다.
+`command` 경로는 실제 배치 경로에 맞게 수정한다. 상대경로는 훅 실행 cwd에 따라
+깨질 수 있으므로 **절대경로를 권장**한다(`install.sh init`은 절대경로를 쓴다).
 
 ```json
 {
@@ -77,7 +90,8 @@ chmod +x tools/design-bounce/hooks/spec-gate.sh \
 
 ## 3. `.design-bounce/state.json` 스키마
 
-design-bounce 워크플로우(SKILL.md)가 이 파일을 생성/갱신한다. 훅은 읽기만 한다.
+`install.sh init`이 `{"phase":"design","spec_approved":false,"current_step":0}`으로 생성하고,
+design-bounce 워크플로우(SKILL.md)가 갱신한다. 훅은 읽기만 한다.
 
 | 필드 | 타입 | 값 | 의미 |
 |---|---|---|---|
@@ -99,6 +113,8 @@ design-bounce 워크플로우(SKILL.md)가 이 파일을 생성/갱신한다. �
 
 ### spec-gate.sh
 - state 파일 없음 → 통과
+- 대상 경로(`tool_input.file_path`)가 state 디렉토리(`.design-bounce/`) 아래 → 통과
+  (Design Phase에서 `design-spec.md` 저장 / `state.json` 갱신 허용)
 - `phase="design"` & `spec_approved != "true"` → **차단**
   (`{"decision":"block","reason":"design-spec 미승인. 명세 승인 후 구현하세요."}`)
 - 그 외 → 통과

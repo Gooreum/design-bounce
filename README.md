@@ -75,12 +75,18 @@ git clone https://github.com/Gooreum/design-bounce ~/Code/design-bounce && cd ~/
 
 ### 2. 프로젝트에 훅 강제 배선 (선택)
 
-특정 프로젝트에서 게이트 훅(`spec-gate` / `screenshot-gate`)까지 강제하려면 채택 프로젝트에 다음을 배선한다.
+특정 프로젝트에서 게이트 훅(`spec-gate` / `screenshot-gate`)까지 강제하려면 채택 프로젝트(Expo) 루트에서 실행한다.
 
-1. design-bounce를 프로젝트에 둔다 (전역 클론 재사용, 또는 `git submodule add https://github.com/Gooreum/design-bounce`).
-2. 프로젝트 루트에 `design-bounce.config.json`을 둔다 (`config.schema.json` 준수, `examples/petcycle.config.json` 참고).
-3. 플랫폼 어댑터를 선택한다 (현재: `rn-expo`).
-4. `hooks/install.md`를 따라 `spec-gate.sh` / `screenshot-gate.sh`를 프로젝트 `settings.json`의 `PreToolUse`에 배선한다.
+```bash
+~/.claude/skills/design-bounce/install.sh init --write
+```
+
+- `design-bounce.config.json`을 `app.json`(scheme / bundleIdentifier) 기반으로 생성한다 (이미 있으면 보존).
+- `.design-bounce/state.json`을 `phase=design`으로 초기화한다 (이미 있으면 보존) → 명세 승인 전 Write/Edit 차단.
+- `.claude/settings.json`에 `PreToolUse` 훅을 병합한다 (멱등, 원본은 `.bak` 백업). `--write` 없이 실행하면 스니펫만 출력한다.
+- 어댑터 `navigate --dry-run`으로 config를 점검하고 채워야 할 항목(`TODO-` placeholder 등)을 안내한다.
+
+게이트를 끄려면 `.design-bounce/state.json`을 삭제한다. 수동 배선 절차는 [`hooks/install.md`](hooks/install.md) 참고.
 
 ### 의존성
 

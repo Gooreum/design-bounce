@@ -64,19 +64,36 @@ check() {
 # TC-1: phase=design & spec_approved=false → block
 SD=$(new_state_dir); mkdir -p "$SD"
 cp "$FIXTURES/state-design-unapproved.json" "$SD/state.json"
-OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SPEC_GATE"); EC=$?
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SPEC_GATE" </dev/null); EC=$?
 check "spec-gate: design 미승인 → block" 0 '"decision":"block"' "$EC" "$OUT"
 
 # TC-2: phase=design & spec_approved=true → 통과(무출력, exit0)
 SD=$(new_state_dir); mkdir -p "$SD"
 cp "$FIXTURES/state-design-approved.json" "$SD/state.json"
-OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SPEC_GATE"); EC=$?
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SPEC_GATE" </dev/null); EC=$?
 check "spec-gate: design 승인 → 통과" 0 "" "$EC" "$OUT"
 
 # TC-3: state 파일 없음 → 통과(무출력, exit0)
 SD=$(new_state_dir); mkdir -p "$SD"   # state.json 생성 안 함
-OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SPEC_GATE"); EC=$?
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SPEC_GATE" </dev/null); EC=$?
 check "spec-gate: state 없음 → 통과" 0 "" "$EC" "$OUT"
+
+# TC-3a: design 미승인이어도 state 디렉토리 내부 쓰기(design-spec.md) → 통과
+SD=$(new_state_dir); mkdir -p "$SD"
+cp "$FIXTURES/state-design-unapproved.json" "$SD/state.json"
+OUT=$(printf '{"tool_name":"Write","tool_input":{"file_path":"%s/design-spec.md"}}' "$SD" \
+  | DESIGN_BOUNCE_DIR="$SD" bash "$SPEC_GATE"); EC=$?
+check "spec-gate: .design-bounce/ 내부 경로 → 통과" 0 "" "$EC" "$OUT"
+
+# TC-3b: design 미승인 + 소스 경로(app/x.tsx) → block
+OUT=$(printf '{"tool_name":"Write","tool_input":{"file_path":"%s/app/x.tsx"}}' "$(dirname "$SD")" \
+  | DESIGN_BOUNCE_DIR="$SD" bash "$SPEC_GATE"); EC=$?
+check "spec-gate: 소스 경로 → block" 0 '"decision":"block"' "$EC" "$OUT"
+
+# TC-3c: .. 로 state 디렉토리를 빠져나가는 경로 → block
+OUT=$(printf '{"tool_name":"Edit","tool_input":{"file_path":"%s/../app/x.tsx"}}' "$SD" \
+  | DESIGN_BOUNCE_DIR="$SD" bash "$SPEC_GATE"); EC=$?
+check "spec-gate: .. 경로 탈출 → block" 0 '"decision":"block"' "$EC" "$OUT"
 
 # ---------------------------------------------------------------------------
 # screenshot-gate 케이스
