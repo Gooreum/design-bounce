@@ -5,6 +5,7 @@ design-bounce의 강제 게이트 훅을 **채택 프로젝트**(예: PetCycle)�
 
 - **spec-gate.sh** — design-spec 승인 전에는 소스 수정을 막는다.
 - **screenshot-gate.sh** — 직전 step의 스크린샷/판정 아티팩트가 없으면 다음 step을 막는다.
+  사람 최종 승인 대기(`phase="review"`) 중에는 `.design-bounce/` 밖 파일 수정을 막는다.
 
 둘 다 Claude Code의 `PreToolUse` 이벤트에 `Write|Edit` matcher로 배선한다.
 훅이 `{"decision":"block", ...}` JSON을 stdout에 출력하면 해당 도구 호출이 차단된다.
@@ -81,7 +82,7 @@ design-bounce 워크플로우(SKILL.md)가 이 파일을 생성/갱신한다. �
 
 | 필드 | 타입 | 값 | 의미 |
 |---|---|---|---|
-| `phase` | string | `"design"` \| `"loop"` | 현재 단계. design=명세 단계, loop=스크린샷 개선 루프 |
+| `phase` | string | `"design"` \| `"loop"` \| `"review"` \| `"done"` | 현재 단계. design=명세 단계, loop=스크린샷 개선 루프, review=사람 최종 승인 대기, done=사람 승인 완료 |
 | `spec_approved` | bool | `true` \| `false` | design-spec을 사용자가 승인했는지 |
 | `current_step` | int | `0`, `1`, `2`, ... | 루프의 현재 step 번호(1부터). 아직 시작 안 했으면 0 |
 
@@ -95,6 +96,10 @@ design-bounce 워크플로우(SKILL.md)가 이 파일을 생성/갱신한다. �
 }
 ```
 
+같은 디렉토리의 `taste.md`는 Human Review에서 사용자가 거부한 사유를 한 줄씩 누적하는
+append-only 파일이다(`- <YYYY-MM-DD> [<screen_id>] <사유 원문>`). 다음 Design Phase 명세가
+이를 금지목록으로 인용한다. 훅은 이 파일을 읽지 않는다.
+
 ## 4. 게이트 동작 요약
 
 ### spec-gate.sh
@@ -105,7 +110,10 @@ design-bounce 워크플로우(SKILL.md)가 이 파일을 생성/갱신한다. �
 
 ### screenshot-gate.sh
 - state 파일 없음 → 통과
-- `phase != "loop"` → 통과
+- `phase="review"` → stdin 훅 입력의 `tool_input.file_path`가 state 디렉토리(`.design-bounce/`) 아래면 통과,
+  그 외(경로를 알 수 없는 경우 포함) → **차단**
+  (`{"decision":"block","reason":"사람 최종 승인 대기 중. 승인/거부 후 진행."}`)
+- `phase != "loop"` (`design`, `done` 등) → 통과
 - `PREV = current_step - 1`이 1 이상이고
   `.design-bounce/steps/step-$PREV/after.png` 또는 `verdict.md`가 없음 → **차단**
   (`{"decision":"block","reason":"직전 step 스크린샷/판정 누락. 캡처+판정 후 진행."}`)

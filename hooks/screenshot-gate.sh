@@ -7,7 +7,10 @@
 #
 # 채택 프로젝트 루트의 `.design-bounce/state.json`을 읽는다:
 #   - state 파일 없음  → 통과
-#   - phase != "loop"  → 통과 (루프 밖에서는 강제하지 않음)
+#   - phase = "review" → 사람 최종 승인 대기. stdin 훅 입력의 file_path가
+#     state 디렉토리(.design-bounce/) 아래면 통과(taste.md/state.json 기록),
+#     그 외(경로 모름 포함) → 차단
+#   - phase != "loop"  → 통과 (루프 밖에서는 강제하지 않음, done 포함)
 #   - PREV = current_step - 1 이 1 이상이고
 #     steps/step-$PREV/after.png 또는 verdict.md 누락 → 차단
 #
@@ -22,6 +25,14 @@ db_state_exists || exit 0
 
 PHASE=$(db_state_field phase "")
 STEP=$(db_state_field current_step "0")
+
+# 사람 최종 승인 대기 중에는 state 디렉토리 밖 수정 차단 (경로 모르면 차단)
+if [ "$PHASE" = "review" ]; then
+  if ! db_path_in_state_dir "$(db_tool_file_path)"; then
+    echo '{"decision":"block","reason":"사람 최종 승인 대기 중. 승인/거부 후 진행."}'
+  fi
+  exit 0
+fi
 
 # 루프 단계가 아니면 강제하지 않음
 [ "$PHASE" != "loop" ] && exit 0

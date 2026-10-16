@@ -18,7 +18,7 @@ design-bounce는 **범용(웹/모바일) 코어 + 플랫폼 어댑터** 구조�
 
 플랫폼과 무관한 워크플로우·검증 지식·훅으로 구성된다.
 
-- **SKILL.md** — 워크플로우 오케스트레이션 (Design Phase + 스크린샷 루프).
+- **SKILL.md** — 워크플로우 오케스트레이션 (Design Phase + 스크린샷 루프 + Human Review).
 - **knowledge/** — 검증 지식 베이스 (리뷰 프로세스, 디자인 표준, 모바일 표준, 안티슬롭 금지목록).
 - **hooks/** — 채택 프로젝트가 `settings.json`에 배선하는 강제 게이트.
 - **config.schema.json** — 채택 프로젝트가 두는 `design-bounce.config.json`의 JSON 스키마 계약.
@@ -53,6 +53,10 @@ Screenshot 루프: Dev 구현 → adapter(build/launch/navigate/capture)
         → QA 2트랙 판정(명세준수 + 외부표준 크리틱)
         → step-N/{after.png, verdict.md}
         → 편차 있으면 재작업 (정지조건: success/plateau/stuck/infra-fail)
+        │
+        ▼
+Human Review: 최종 after.png + verdict 요약 → [사용자 승인] → done
+        └─ [거부(+사유)] → taste.md 누적 → loop (다음 명세에 금지목록으로 인용)
 ```
 
 ## 설치
