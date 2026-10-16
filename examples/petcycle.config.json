@@ -5,6 +5,14 @@
   "simulator": "iPhone 16 Pro",
   "tokens": "src/theme/tokens.ts",
   "captureDir": ".design-bounce/shots",
+  "measure": {
+    "tokensJson": "src/theme/tokens.json",
+    "colorPairs": [
+      { "fg": "colors.text", "bg": "colors.bg" },
+      { "fg": "colors.textMuted", "bg": "colors.bg" },
+      { "fg": "colors.onPrimary", "bg": "colors.primary", "large": true }
+    ]
+  },
   "screens": {
     "home": {
       "deeplink": "petcycle://home",
