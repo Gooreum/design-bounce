@@ -98,6 +98,47 @@ OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SHOT_GATE"); EC=$?
 check "screenshot-gate: step-1 아티팩트 있음 → 통과" 0 "" "$EC" "$OUT"
 
 # ---------------------------------------------------------------------------
+# Human Review(phase=review/done) 케이스 — 훅 입력 JSON을 stdin으로 전달
+# ---------------------------------------------------------------------------
+
+# TC-6: phase=review, 소스 파일 수정 → block
+SD=$(new_state_dir); mkdir -p "$SD"
+cp "$FIXTURES/state-review.json" "$SD/state.json"
+INPUT='{"tool_input":{"file_path":"src/Home.tsx"}}'
+OUT=$(printf '%s' "$INPUT" | DESIGN_BOUNCE_DIR="$SD" bash "$SHOT_GATE"); EC=$?
+check "screenshot-gate: review 중 소스 수정 → block" 0 '"decision":"block"' "$EC" "$OUT"
+
+# TC-7: phase=review, state 디렉토리의 taste.md 기록 → 통과
+SD=$(new_state_dir); mkdir -p "$SD"
+cp "$FIXTURES/state-review.json" "$SD/state.json"
+INPUT="{\"tool_input\":{\"file_path\":\"$SD/taste.md\"}}"
+OUT=$(printf '%s' "$INPUT" | DESIGN_BOUNCE_DIR="$SD" bash "$SHOT_GATE"); EC=$?
+check "screenshot-gate: review 중 taste.md 기록 → 통과" 0 "" "$EC" "$OUT"
+
+# TC-8: phase=review, 훅 입력 없음/file_path 없음 → block (경로 모르면 차단)
+SD=$(new_state_dir); mkdir -p "$SD"
+cp "$FIXTURES/state-review.json" "$SD/state.json"
+OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SHOT_GATE" </dev/null); EC=$?
+check "screenshot-gate: review 중 stdin 없음 → block" 0 '"decision":"block"' "$EC" "$OUT"
+OUT=$(printf '%s' '{"tool_input":{}}' | DESIGN_BOUNCE_DIR="$SD" bash "$SHOT_GATE"); EC=$?
+check "screenshot-gate: review 중 file_path 없음 → block" 0 '"decision":"block"' "$EC" "$OUT"
+
+# TC-9: phase=done → 통과
+SD=$(new_state_dir); mkdir -p "$SD"
+cp "$FIXTURES/state-done.json" "$SD/state.json"
+INPUT='{"tool_input":{"file_path":"src/Home.tsx"}}'
+OUT=$(printf '%s' "$INPUT" | DESIGN_BOUNCE_DIR="$SD" bash "$SHOT_GATE"); EC=$?
+check "screenshot-gate: done → 통과" 0 "" "$EC" "$OUT"
+
+# TC-10: spec-gate는 phase=review/done에서 통과(회귀 방지)
+for FX in state-review.json state-done.json; do
+  SD=$(new_state_dir); mkdir -p "$SD"
+  cp "$FIXTURES/$FX" "$SD/state.json"
+  OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SPEC_GATE"); EC=$?
+  check "spec-gate: ${FX} → 통과" 0 "" "$EC" "$OUT"
+done
+
+# ---------------------------------------------------------------------------
 # 결과 집계
 # ---------------------------------------------------------------------------
 echo "-----------------------------------------"
