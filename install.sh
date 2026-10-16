@@ -9,6 +9,7 @@ set -euo pipefail
 #   ./install.sh --update   # git pull로 최신화 (심링크 설치용)
 #   ./install.sh --version  # 현재 커밋 + origin 대비 뒤처짐 확인
 #   ./install.sh --help     # 도움말
+#   ./install.sh init [--write]  # (채택 프로젝트 루트에서) config·state·훅 배선 생성 — hooks/init.sh
 #
 # 테스트 격리: CLAUDE_SKILLS_DIR 환경변수로 설치 위치를 override 할 수 있다.
 
@@ -29,6 +30,12 @@ install_link() {
   fi
 }
 
+# --- init 서브커맨드: 스킬 설치 없이 채택 프로젝트 온보딩 (hooks/init.sh) ---
+if [ "${1:-}" = "init" ]; then
+  command -v jq >/dev/null || { echo "❌ jq 없음 — init에 필요: brew install jq" >&2; exit 1; }
+  exec bash "$REPO_DIR/hooks/init.sh" "${@:2}"
+fi
+
 # --- 인자 파싱 ---
 for a in "$@"; do
   case "$a" in
@@ -38,10 +45,12 @@ for a in "$@"; do
     -v|--version)  DO_VERSION=1;;
     -h|--help)
       echo "usage: install.sh [--copy] [--force] [--update] [--version]"
+      echo "       install.sh init [--write] [--project <dir>]"
       echo "  --copy    심링크 대신 복사본으로 설치"
       echo "  --force   기존 설치를 제거하고 재설치"
       echo "  --update  git pull로 최신화 (심링크 설치용)"
       echo "  --version 현재 커밋 + origin 대비 뒤처짐 확인"
+      echo "  init      프로젝트 루트에서 config·state 생성 + 훅 스니펫 출력 (--write 시 settings.json 병합)"
       exit 0;;
     *) echo "unknown arg: $a" >&2; exit 2;;
   esac
@@ -103,4 +112,4 @@ fi
 # --- 검증 ---
 [ -f "$LINK/SKILL.md" ] || { echo "❌ 검증 실패: SKILL.md 미발견" >&2; exit 1; }
 echo "✅ 설치 완료. 새 세션에서 /design-bounce 사용 가능."
-echo "   프로젝트 훅 강제: hooks/install.md 참고"
+echo "   프로젝트 훅 강제: 프로젝트 루트에서 $LINK/install.sh init --write"
