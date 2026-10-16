@@ -58,3 +58,5 @@ CFG="${DESIGN_BOUNCE_CONFIG:-design-bounce.config.json}"
 4. `design-bounce.config.json`의 `adapter` 필드를 `<platform>`으로 설정.
 
 이 계약을 지키는 한 워크플로우는 플랫폼을 구분하지 않고 동일하게 동작한다.
+
+> 토큰 측정(대비·간격 그리드)은 어댑터 책임이 아니다. 플랫폼 무관 core `scripts/measure.sh`가 담당한다.

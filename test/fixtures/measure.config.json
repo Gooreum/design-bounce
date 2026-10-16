@@ -1,0 +1,19 @@
+{
+  "adapter": "rn-expo",
+  "scheme": "fixture",
+  "tokens": "src/theme/tokens.ts",
+  "screens": {
+    "home": { "deeplink": "fixture://home", "route": "app/home.tsx" }
+  },
+  "measure": {
+    "tokensJson": "tokens.json",
+    "colorPairs": [
+      { "fg": "colors.text", "bg": "colors.bg" },
+      { "fg": "colors.textMuted", "bg": "colors.bg" },
+      { "fg": "colors.heading", "bg": "colors.bg", "large": true },
+      { "fg": "colors.overlay", "bg": "colors.bg" }
+    ],
+    "gridPaths": ["spacing"],
+    "radiusPaths": ["radius"]
+  }
+}

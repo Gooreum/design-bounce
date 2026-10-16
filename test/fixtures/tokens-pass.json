@@ -1,0 +1,11 @@
+{
+  "colors": {
+    "bg": "#FFFFFF",
+    "text": "#111827",
+    "textMuted": "#767676",
+    "heading": "#4B5563",
+    "overlay": "#000"
+  },
+  "spacing": { "xxs": 4, "xs": 8, "sm": 12, "md": 16, "lg": "24px", "xl": 32 },
+  "radius": { "sm": 4, "md": 8, "lg": 12 }
+}

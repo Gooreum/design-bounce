@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # run.sh — design-bounce harness 마스터 테스트 러너
 #
-# CWD와 무관하게 자기 위치 기준으로 repo 루트를 찾아 아래 6개 섹션을 순서대로 실행한다:
+# CWD와 무관하게 자기 위치 기준으로 repo 루트를 찾아 아래 7개 섹션을 순서대로 실행한다:
 #   1. JSON 유효성 (jq)      : config.schema.json + examples/petcycle.config.json 파싱
-#   2. bash 문법 (bash -n)   : adapters/hooks/test 모든 .sh
+#   2. bash 문법 (bash -n)   : adapters/hooks/scripts/test 모든 .sh
 #   3. 훅 유닛테스트          : test/test-hooks.sh
 #   4. 어댑터 dry-run         : test/test-adapter.sh
 #   5. 설치 유닛테스트        : test/test-install.sh
-#   6. 내용 존재 (grep)       : knowledge/*.md + SKILL.md 필수 문자열
+#   6. 측정 유닛테스트        : test/test-measure.sh
+#   7. 내용 존재 (grep)       : knowledge/*.md + SKILL.md 필수 문자열
 #
 # 각 섹션 PASS/FAIL 출력. 하나라도 실패면 exit 1, 전부 통과면 "ALL PASS" + exit 0.
 set -u
@@ -37,7 +38,8 @@ if ! command -v jq >/dev/null 2>&1; then
   echo "  FAIL: jq 미설치 (brew install jq)"
   FAILED=1
 else
-  for f in config.schema.json examples/petcycle.config.json; do
+  for f in config.schema.json examples/petcycle.config.json \
+           test/fixtures/measure.config.json test/fixtures/tokens-pass.json test/fixtures/tokens-fail.json; do
     if jq . "$REPO/$f" >/dev/null 2>&1; then
       report "jq . $f" 0
     else
@@ -50,7 +52,7 @@ fi
 # 2. bash 문법 (bash -n) — 모든 .sh
 # ---------------------------------------------------------------------------
 section "2. bash 문법 (bash -n)"
-SH_FILES=$(find "$REPO/adapters" "$REPO/hooks" "$REPO/test" -name '*.sh' -type f | sort)
+SH_FILES=$(find "$REPO/adapters" "$REPO/hooks" "$REPO/scripts" "$REPO/test" -name '*.sh' -type f | sort)
 for sh in $SH_FILES; do
   rel="${sh#$REPO/}"
   if bash -n "$sh" 2>/dev/null; then
@@ -91,9 +93,19 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 6. 내용 존재 (grep)
+# 6. 측정 유닛테스트
 # ---------------------------------------------------------------------------
-section "6. 내용 존재 (grep)"
+section "6. 측정 유닛테스트 (test-measure.sh)"
+if bash "$REPO/test/test-measure.sh"; then
+  report "test-measure.sh" 0
+else
+  report "test-measure.sh" 1
+fi
+
+# ---------------------------------------------------------------------------
+# 7. 내용 존재 (grep)
+# ---------------------------------------------------------------------------
+section "7. 내용 존재 (grep)"
 
 grep_any() {
   # $1 라벨  $2 문자열  $3.. 파일들 — 하나라도 매치하면 PASS
@@ -112,6 +124,7 @@ grep_any "knowledge: Blocker" "Blocker" "${KN[@]}"
 grep_any "knowledge: 44pt"    "44pt"    "${KN[@]}"
 grep_any "SKILL.md: Design Phase" "Design Phase" "$REPO/SKILL.md"
 grep_any "SKILL.md: 정지조건"     "정지조건"     "$REPO/SKILL.md"
+grep_any "SKILL.md: measure.json" "measure.json" "$REPO/SKILL.md"
 
 # ---------------------------------------------------------------------------
 # 집계

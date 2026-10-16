@@ -21,6 +21,7 @@ design-bounce는 **범용(웹/모바일) 코어 + 플랫폼 어댑터** 구조�
 - **SKILL.md** — 워크플로우 오케스트레이션 (Design Phase + 스크린샷 루프).
 - **knowledge/** — 검증 지식 베이스 (리뷰 프로세스, 디자인 표준, 모바일 표준, 안티슬롭 금지목록).
 - **hooks/** — 채택 프로젝트가 `settings.json`에 배선하는 강제 게이트.
+- **scripts/measure.sh** — 토큰 JSON의 WCAG 대비·8px 그리드를 결정론적으로 측정해 `measure.json`으로 남긴다.
 - **config.schema.json** — 채택 프로젝트가 두는 `design-bounce.config.json`의 JSON 스키마 계약.
 
 ### 플랫폼 어댑터
@@ -128,14 +129,32 @@ git add tools/design-bounce && git commit -m "chore: design-bounce 업데이트"
 
 1. **Design Phase 실행** — SKILL.md 워크플로우로 명세를 생성하고 승인받는다.
 2. **Screenshot 루프 실행** — 어댑터로 화면을 캡처하고 2트랙 판정을 반복한다.
-3. **검증** — `test/run.sh`로 harness 자체 유닛테스트(JSON 유효성 / 훅 / 어댑터 dry-run / bash 문법)를 실행한다.
+3. **측정** — 캡처 후 `scripts/measure.sh --step N`으로 토큰 수치를 측정한다. 판정자는 위반을 `[Blocker]`로 인용한다.
+4. **검증** — `test/run.sh`로 harness 자체 유닛테스트(JSON 유효성 / 훅 / 어댑터 dry-run / 측정 / bash 문법)를 실행한다.
 
 ```bash
 # 어댑터 dry-run (실제 실행 없이 명령 문자열 확인)
 adapters/rn-expo/adapter.sh capture home --dry-run
 
+# 토큰 측정 → .design-bounce/steps/step-1/measure.json (exit 0=pass/skipped, 1=위반, 2=입력 오류)
+scripts/measure.sh --step 1
+
 # harness 전체 테스트
 test/run.sh
+```
+
+측정은 config의 `measure` 블록으로 켠다 (없으면 `skipped`). JSON 토큰 파일만 지원하므로, 토큰이 `.ts`라면
+`tokens.json`을 진실의 원천으로 두고 `tokens.ts`가 import하게 구성한다. 색 형식은 `#RGB` / `#RRGGBB`.
+
+```json
+"measure": {
+  "tokensJson": "src/theme/tokens.json",
+  "colorPairs": [
+    { "fg": "colors.textMuted", "bg": "colors.bg" },
+    { "fg": "colors.onPrimary", "bg": "colors.primary", "large": true }
+  ],
+  "gridPaths": ["spacing"]
+}
 ```
 
 ## 디렉토리 구조
@@ -154,6 +173,7 @@ design-bounce/
 │   └── rn-expo/
 ├── hooks/                    강제 게이트 훅 + lib
 │   └── lib/
+├── scripts/                  measure.sh (토큰 결정론적 측정)
 └── test/                     테스트 러너 + fixtures
     └── fixtures/
 ```

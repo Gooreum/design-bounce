@@ -92,8 +92,9 @@ Step N:
      adapter.sh launch           → OK
      adapter.sh navigate <id>    → OK
      adapter.sh capture <id>     → <png경로>
-  3. QA(Vision)가 스크린샷을 Read하여 2트랙 판정
-  4. 편차를 트리아지하여 .design-bounce/steps/step-N/{after.png, verdict.md} 기록
+     scripts/measure.sh --step N → steps/step-N/measure.json (0=pass/skipped, 1=위반, 2=입력 오류)
+  3. QA(Vision)가 measure.json → 스크린샷 순으로 Read하여 2트랙 판정
+  4. 편차를 트리아지하여 .design-bounce/steps/step-N/{after.png, measure.json, verdict.md} 기록
   5. Blocker/High-Priority가 있으면 재작업 → 다시 2로
 ```
 
@@ -109,6 +110,12 @@ Step N:
 - **트랙 B — 표준 크리틱 (외부표준)**: 명세와 별개로 `knowledge/review-process.md`의
   **8단계 리뷰**(인터랙션 → 반응형 → 비주얼 폴리시 → 접근성 → 견고성 → 코드헬스 → 콘텐츠)를
   따라 **대비 4.5:1 / 8px 정렬 / 터치타겟 44pt / 시각 위계**를 독립 판정한다.
+  - **측정 선독**: 판정자는 `steps/step-N/measure.json`을 스크린샷보다 **먼저** Read한다.
+    `violations[]`의 각 항목은 측정값·기준값과 함께 `[Blocker]`로 그대로 인용한다
+    (예: `[Blocker] 대비 2.53:1 < 4.5:1 — colors.textMuted on colors.bg`).
+    **비전 판정으로 측정 결과를 뒤집을 수 없다.** `skipped[]` 항목은 `[Medium-Priority]`(측정 불가)로,
+    `status: "skipped"`면 "측정 미설정" 한 줄만 남기고 비전 판정만 한다.
+  - `colorPairs`에 선언되지 않은 텍스트/배경 조합은 측정 사각지대다. 화면에서 보이면 비전 판정으로 따로 적는다.
 
 두 트랙 모두 **트리아지 매트릭스**로 등급을 매긴다:
 
@@ -136,7 +143,7 @@ Step N:
 | **success** | 2트랙 모두 clean(Blocker/High 0건)이 **2회 연속** | 해당 step 완료, 다음 step |
 | **plateau** | 편차 수가 **3사이클 동안 정체**(줄지 않음) | TODO로 남기고 사용자에게 보고 |
 | **stuck** | **동일 편차가 2회 실패** → 다른 접근 시도. **3회** 실패 → TODO로 남기고 전진 |
-| **infra-fail** | `build`/`capture` 등 어댑터 실패 | 1회 재시도 → 그래도 실패면 중단·보고 |
+| **infra-fail** | `build`/`capture` 등 어댑터 실패, `measure.sh` exit 2 | 1회 재시도 → 그래도 실패면 중단·보고 |
 
 > **컨텍스트 압축**: 루프가 길어지면 이전 사이클을 **요약 + 최근 스크린샷**만 유지하고
 > 오래된 verdict 원문은 압축한다. 판정에 필요한 것은 최신 화면과 남은 편차 목록이다.

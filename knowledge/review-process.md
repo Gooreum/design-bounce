@@ -54,6 +54,7 @@
 - **포커스**: 포커스 링이 시각적으로 명확하고 순서가 논리적.
 - **시맨틱**: 의미에 맞는 역할/레이블(버튼은 버튼, 헤딩 위계).
 - **대비**: 텍스트/배경 대비 **4.5:1 이상** (큰 텍스트 3:1). 이 기준 미달은 접근성 Blocker 후보.
+  `measure.json`에 측정값이 있으면 **측정값이 우선**한다 (눈대중으로 뒤집지 않는다).
 
 ### Phase 5 — 견고성 (Robustness / Edge States)
 - **빈 상태(empty)**: 데이터 0건일 때 화면이 무너지지 않고 안내가 있는가.
@@ -92,5 +93,9 @@
 각 판정(`verdict.md`)은 다음을 포함한다:
 1. **잘된 점** (인정) 1~N개.
 2. 트리아지 등급별 **발견 사항** — 각 항목에 문제·영향 + 스크린샷 증거.
-3. 트랙 A(명세 준수) / 트랙 B(외부표준 크리틱) 요약.
-4. 정지 판단: success / plateau / stuck / infra-fail.
+3. **측정 결과** — `measure.json`의 `status`(pass / fail / skipped / error)와 `violations[]` 인용.
+   위반은 측정값·기준값을 그대로 적어 `[Blocker]`로 올린다. `skipped[]`는 `[Medium-Priority]`(측정 불가).
+   - 예: `[Blocker] 대비 2.53:1 < 4.5:1 — colors.textMuted on colors.bg`
+   - 예: `[Blocker] 간격 13 — spacing.md (8의 배수 또는 [4,12] 아님)`
+4. 트랙 A(명세 준수) / 트랙 B(외부표준 크리틱) 요약.
+5. 정지 판단: success / plateau / stuck / infra-fail (`measure.sh` exit 2는 infra-fail).
