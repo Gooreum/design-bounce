@@ -4,12 +4,12 @@
 set -euo pipefail
 
 DRY="${1:-}"
-CMD="npx expo run:ios"
+CMD=(npx expo run:ios)
 
 if [ "$DRY" = "--dry-run" ]; then
-  echo "$CMD"
+  printf '%q ' "${CMD[@]}"; echo
   exit 0
 fi
 
-eval "$CMD" >&2
+"${CMD[@]}" >&2
 echo "OK"

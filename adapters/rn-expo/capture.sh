@@ -13,14 +13,19 @@ if [ -z "$SCREEN" ]; then
   echo "capture.sh: screen_id 인자 필요" >&2
   exit 2
 fi
+# 경로 탐색(../) 방지: screen_id는 [A-Za-z0-9_-]+ 만 허용
+if ! [[ "$SCREEN" =~ ^[A-Za-z0-9_-]+$ ]]; then
+  echo "capture.sh: 잘못된 screen_id (허용: [A-Za-z0-9_-]+): $SCREEN" >&2
+  exit 2
+fi
 
 OUTDIR="$(jq -r '.captureDir // ".design-bounce/shots"' "$CFG")"
 SETTLE="$(jq -r --arg id "$SCREEN" '.screens[$id].settleMs // 0' "$CFG")"
 OUT="$OUTDIR/$SCREEN.png"
-CMD="xcrun simctl io booted screenshot \"$OUT\""
+CMD=(xcrun simctl io booted screenshot "$OUT")
 
 if [ "$DRY" = "--dry-run" ]; then
-  echo "SLEEP ${SETTLE}ms; $CMD"
+  printf 'SLEEP %sms; ' "$SETTLE"; printf '%q ' "${CMD[@]}"; echo
   exit 0
 fi
 
@@ -28,5 +33,5 @@ mkdir -p "$OUTDIR"
 if [ "$SETTLE" -gt 0 ]; then
   sleep "$(echo "scale=3; $SETTLE/1000" | bc -l)"
 fi
-eval "$CMD" >&2
+"${CMD[@]}" >&2
 echo "$OUT"
