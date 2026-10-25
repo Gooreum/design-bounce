@@ -112,6 +112,7 @@ grep_any "knowledge: Blocker" "Blocker" "${KN[@]}"
 grep_any "knowledge: 44pt"    "44pt"    "${KN[@]}"
 grep_any "SKILL.md: Design Phase" "Design Phase" "$REPO/SKILL.md"
 grep_any "SKILL.md: 정지조건"     "정지조건"     "$REPO/SKILL.md"
+grep_any "verdict-template: deviations:" "deviations:" "$REPO/knowledge/verdict-template.md"
 
 # ---------------------------------------------------------------------------
 # 집계

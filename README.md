@@ -51,7 +51,7 @@ Design Phase: 명세 생성 → [사용자 승인 게이트] → spec_approved=t
         ▼
 Screenshot 루프: Dev 구현 → adapter(build/launch/navigate/capture)
         → QA 2트랙 판정(명세준수 + 외부표준 크리틱)
-        → step-N/{after.png, verdict.md}
+        → step-N/{after.png, verdict.md}  (verdict.md = knowledge/verdict-template.md 형식)
         → 편차 있으면 재작업 (정지조건: success/plateau/stuck/infra-fail)
 ```
 
