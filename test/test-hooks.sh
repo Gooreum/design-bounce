@@ -65,8 +65,25 @@ check() {
 # TC-1: phase=design & spec_approved=false → block
 SD=$(new_state_dir); mkdir -p "$SD"
 cp "$FIXTURES/state-design-unapproved.json" "$SD/state.json"
-OUT=$(DESIGN_BOUNCE_DIR="$SD" bash "$SPEC_GATE"); EC=$?
+OUT=$(printf '{"tool_input":{"file_path":"/proj/src/App.tsx"}}' \
+  | DESIGN_BOUNCE_DIR="$SD" bash "$SPEC_GATE"); EC=$?
 check "spec-gate: design 미승인 → block" 0 '"decision":"block"' "$EC" "$OUT"
+
+# TC-1b: design 미승인이어도 state 디렉토리 하위(state.json) 쓰기는 통과
+OUT=$(printf '{"tool_input":{"file_path":"%s/state.json"}}' "$SD" \
+  | DESIGN_BOUNCE_DIR="$SD" bash "$SPEC_GATE"); EC=$?
+check "spec-gate: design 미승인 + state.json 쓰기 → 통과" 0 "" "$EC" "$OUT"
+
+# TC-1c: 기본 상대경로(.design-bounce) 설정에서 절대경로 명세 파일 쓰기 → 통과
+(cd "$(dirname "$SD")" \
+  && printf '{"tool_input":{"file_path":"/proj/.design-bounce/design-spec.md"}}' \
+  | bash "$SPEC_GATE" > "$SD/.out"); EC=$?
+check "spec-gate: design 미승인 + design-spec.md 쓰기 → 통과" 0 "" "$EC" "$(cat "$SD/.out")"
+
+# TC-1d: state 디렉토리를 경유한 경로 탈출(../)은 block
+OUT=$(printf '{"tool_input":{"file_path":"%s/../src/App.tsx"}}' "$SD" \
+  | DESIGN_BOUNCE_DIR="$SD" bash "$SPEC_GATE"); EC=$?
+check "spec-gate: design 미승인 + ../ 경로 탈출 → block" 0 '"decision":"block"' "$EC" "$OUT"
 
 # TC-2: phase=design & spec_approved=true → 통과(무출력, exit0)
 SD=$(new_state_dir); mkdir -p "$SD"
