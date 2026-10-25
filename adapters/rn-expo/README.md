@@ -28,7 +28,7 @@ bash adapter.sh capture home
 
 # 명령 미리보기
 bash adapter.sh navigate home --dry-run
-# → xcrun simctl openurl booted "petcycle://home"
+# → xcrun simctl openurl booted petcycle://home
 ```
 
 ## config (`design-bounce.config.json`)

@@ -29,10 +29,10 @@ design-bounce 워크플로우(SKILL.md)는 플랫폼 세부사항을 모른다. 
 예:
 ```
 $ adapter.sh navigate home --dry-run
-xcrun simctl openurl booted "petcycle://home"
+xcrun simctl openurl booted petcycle://home
 
 $ adapter.sh capture home --dry-run
-SLEEP 600ms; xcrun simctl io booted screenshot ".design-bounce/shots/home.png"
+SLEEP 600ms; xcrun simctl io booted screenshot .design-bounce/shots/home.png
 ```
 
 ## 설정 파일

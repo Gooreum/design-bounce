@@ -13,6 +13,11 @@ if [ -z "$SCREEN" ]; then
   echo "navigate.sh: screen_id 인자 필요" >&2
   exit 2
 fi
+# 경로 탐색(../) 방지: screen_id는 [A-Za-z0-9_-]+ 만 허용
+if ! [[ "$SCREEN" =~ ^[A-Za-z0-9_-]+$ ]]; then
+  echo "navigate.sh: 잘못된 screen_id (허용: [A-Za-z0-9_-]+): $SCREEN" >&2
+  exit 2
+fi
 
 DEEPLINK="$(jq -r --arg id "$SCREEN" '.screens[$id].deeplink // empty' "$CFG")"
 if [ -z "$DEEPLINK" ]; then
@@ -20,12 +25,12 @@ if [ -z "$DEEPLINK" ]; then
   exit 3
 fi
 
-CMD="xcrun simctl openurl booted \"$DEEPLINK\""
+CMD=(xcrun simctl openurl booted "$DEEPLINK")
 
 if [ "$DRY" = "--dry-run" ]; then
-  echo "$CMD"
+  printf '%q ' "${CMD[@]}"; echo
   exit 0
 fi
 
-eval "$CMD" >&2
+"${CMD[@]}" >&2
 echo "OK"

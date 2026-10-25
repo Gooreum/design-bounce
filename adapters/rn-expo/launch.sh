@@ -13,12 +13,12 @@ if [ -z "$BUNDLE_ID" ]; then
   exit 4
 fi
 
-CMD="xcrun simctl launch booted $BUNDLE_ID"
+CMD=(xcrun simctl launch booted "$BUNDLE_ID")
 
 if [ "$DRY" = "--dry-run" ]; then
-  echo "$CMD"
+  printf '%q ' "${CMD[@]}"; echo
   exit 0
 fi
 
-eval "$CMD" >&2
+"${CMD[@]}" >&2
 echo "OK"
