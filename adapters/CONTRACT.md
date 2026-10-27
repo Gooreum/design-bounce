@@ -44,11 +44,27 @@ SLEEP 600ms; xcrun simctl io booted screenshot ".design-bounce/shots/home.png"
 CFG="${DESIGN_BOUNCE_CONFIG:-design-bounce.config.json}"
 ```
 
-읽는 필드:
-- `bundleId` — `launch`가 사용
+읽는 필드 (공통):
 - `captureDir` (기본 `.design-bounce/shots`) — `capture` 출력 위치
-- `screens[<id>].deeplink` — `navigate`가 사용
 - `screens[<id>].settleMs` (기본 0) — `capture`가 스크린샷 전 대기
+
+`rn-expo`:
+- `bundleId` — `launch`가 사용
+- `screens[<id>].deeplink` — `navigate`가 사용
+
+`web-playwright`:
+- `baseUrl` — `launch` 헬스체크, `navigate`/`capture` URL 기준
+- `viewport` (기본 1280×800) — `capture` viewport
+- `buildCommand` / `devCommand` — 문자열 배열(argv). 셸 해석 없이 실행
+- `launchTimeoutMs` (기본 30000) — `launch` 헬스체크 대기 한도
+- `screens[<id>].path` — `/`로 시작하는 경로. `navigate`/`capture`가 사용
+- `screens[<id>].fullPage` (기본 false) — 전체 페이지 캡처
+
+## navigate와 capture의 분담
+
+함수 호출마다 프로세스가 따로 뜨기 때문에, 플랫폼에 따라 `navigate`가 만든 상태(열린 페이지 등)가
+`capture`까지 이어지지 않을 수 있다. 이런 어댑터는 `navigate`에서 **도달 가능 여부만 확인**하고,
+`capture`가 해당 화면으로 직접 이동해 찍어도 된다 (예: `web-playwright`). 계약상 출력과 종료 코드는 동일하다.
 
 ## 새 플랫폼 어댑터 추가하기
 

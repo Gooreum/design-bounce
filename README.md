@@ -28,9 +28,10 @@ design-bounce는 **범용(웹/모바일) 코어 + 플랫폼 어댑터** 구조�
 빌드/실행/네비게이션/캡처를 플랫폼별로 캡슐화한다. 코어는 **4개 함수 계약**(`build` / `launch` / `navigate` / `capture`)만 호출하고, 어댑터가 실제 명령을 수행한다.
 
 - **adapters/CONTRACT.md** — 어댑터 계약 (표준 I/O).
-- **adapters/rn-expo/** — 첫 어댑터. React Native / Expo용 `simctl` / `expo` 구현 (`--dry-run` 지원).
+- **adapters/rn-expo/** — React Native / Expo용 `simctl` / `expo` 구현 (`--dry-run` 지원).
+- **adapters/web-playwright/** — 웹용. dev 서버 기동 + Playwright viewport 고정 스크린샷 (`--dry-run` 지원).
 
-새 플랫폼(웹, Flutter 등)은 CONTRACT.md를 만족하는 어댑터만 추가하면 코어 재사용.
+새 플랫폼(Android, Flutter 등)은 CONTRACT.md를 만족하는 어댑터만 추가하면 코어 재사용.
 
 ### 스크린샷 검증 루프
 
@@ -78,8 +79,8 @@ git clone https://github.com/Gooreum/design-bounce ~/Code/design-bounce && cd ~/
 특정 프로젝트에서 게이트 훅(`spec-gate` / `screenshot-gate`)까지 강제하려면 채택 프로젝트에 다음을 배선한다.
 
 1. design-bounce를 프로젝트에 둔다 (전역 클론 재사용, 또는 `git submodule add https://github.com/Gooreum/design-bounce`).
-2. 프로젝트 루트에 `design-bounce.config.json`을 둔다 (`config.schema.json` 준수, `examples/petcycle.config.json` 참고).
-3. 플랫폼 어댑터를 선택한다 (현재: `rn-expo`).
+2. 프로젝트 루트에 `design-bounce.config.json`을 둔다 (`config.schema.json` 준수, RN은 `examples/petcycle.config.json`, 웹은 `examples/web.config.json` 참고).
+3. 플랫폼 어댑터를 선택한다 (지원: `rn-expo`, `web-playwright`).
 4. `hooks/install.md`를 따라 `spec-gate.sh` / `screenshot-gate.sh`를 프로젝트 `settings.json`의 `PreToolUse`에 배선한다.
 
 ### 의존성
@@ -87,6 +88,7 @@ git clone https://github.com/Gooreum/design-bounce ~/Code/design-bounce && cd ~/
 - `jq` — config / state JSON 파싱 (훅·어댑터 런타임). `brew install jq`.
 - Xcode 커맨드라인 툴(`xcrun simctl`) — `rn-expo` 어댑터(macOS)에 필요.
 - `node` / `npx expo` — `rn-expo` build에 필요.
+- `node` + 프로젝트 devDependency `playwright`(`npx playwright install chromium`) + `curl` — `web-playwright` 어댑터에 필요.
 
 `install.sh`는 위 의존성이 없으면 경고만 출력하고 설치는 계속한다.
 
@@ -133,6 +135,7 @@ git add tools/design-bounce && git commit -m "chore: design-bounce 업데이트"
 ```bash
 # 어댑터 dry-run (실제 실행 없이 명령 문자열 확인)
 adapters/rn-expo/adapter.sh capture home --dry-run
+adapters/web-playwright/adapter.sh capture home --dry-run
 
 # harness 전체 테스트
 test/run.sh
@@ -149,9 +152,10 @@ design-bounce/
 ├── config.schema.json        design-bounce.config.json JSON 스키마
 ├── examples/                 config 예시
 ├── knowledge/                검증 지식 (플랫폼 무관 + 모바일)
-├── adapters/                 어댑터 계약 + rn-expo 구현
+├── adapters/                 어댑터 계약 + 플랫폼별 구현
 │   ├── CONTRACT.md
-│   └── rn-expo/
+│   ├── rn-expo/
+│   └── web-playwright/
 ├── hooks/                    강제 게이트 훅 + lib
 │   └── lib/
 └── test/                     테스트 러너 + fixtures

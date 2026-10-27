@@ -1,0 +1,9 @@
+{
+  "adapter": "web-playwright",
+  "baseUrl": "http://127.0.0.1:9",
+  "screens": {
+    "nopath": { "route": "src/pages/NoPath.tsx" },
+    "relative": { "path": "settings" },
+    "protocolRelative": { "path": "//evil.example.com/" }
+  }
+}

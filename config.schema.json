@@ -2,18 +2,18 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/design-bounce/config.schema.json",
   "title": "design-bounce.config.json",
-  "description": "design-bounce 프로젝트 설정 스키마. 어댑터, 빌드 스킴, 대상 화면 매핑을 정의한다.",
+  "description": "design-bounce 프로젝트 설정 스키마. 어댑터, 빌드/실행 설정, 대상 화면 매핑을 정의한다.",
   "type": "object",
-  "required": ["adapter", "scheme", "screens"],
+  "required": ["adapter", "screens"],
   "additionalProperties": false,
   "properties": {
     "adapter": {
       "type": "string",
-      "description": "사용할 플랫폼 어댑터 식별자 (예: rn-expo)."
+      "description": "사용할 플랫폼 어댑터 식별자 (예: rn-expo, web-playwright)."
     },
     "scheme": {
       "type": "string",
-      "description": "빌드/딥링크 URL 스킴 (예: petcycle)."
+      "description": "빌드/딥링크 URL 스킴 (예: petcycle). rn-expo에서 필수."
     },
     "bundleId": {
       "type": "string",
@@ -31,18 +31,65 @@
       "type": "string",
       "description": "스크린샷 캡처 결과 저장 디렉터리 (예: .design-bounce/shots)."
     },
+    "baseUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://",
+      "description": "web: 앱 기준 URL (예: http://localhost:5173). web-playwright에서 필수."
+    },
+    "viewport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "description": "web: 캡처 viewport 크기 (기본 1280x800).",
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "buildCommand": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      },
+      "description": "web: 빌드 명령 (argv 배열, 셸 해석 없음). 예: [\"npm\",\"run\",\"build\"]. 없으면 build 생략."
+    },
+    "devCommand": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      },
+      "description": "web: dev 서버 기동 명령 (argv 배열, 셸 해석 없음). 예: [\"npm\",\"run\",\"dev\"]."
+    },
+    "launchTimeoutMs": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "web: launch 헬스체크 대기 한도(ms, 기본 30000)."
+    },
     "screens": {
       "type": "object",
-      "description": "화면 id → 화면 정의 매핑. 각 화면의 딥링크/라우트/출발점 시안을 기술한다.",
+      "description": "화면 id → 화면 정의 매핑. 각 화면의 딥링크/경로/라우트/출발점 시안을 기술한다.",
       "minProperties": 1,
       "additionalProperties": {
         "type": "object",
-        "required": ["deeplink", "route"],
         "additionalProperties": false,
         "properties": {
           "deeplink": {
             "type": "string",
-            "description": "화면으로 이동하는 딥링크 URL (예: petcycle://home)."
+            "description": "rn-expo: 화면으로 이동하는 딥링크 URL (예: petcycle://home)."
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^/([^/]|$)",
+            "description": "web: baseUrl 기준 화면 경로 (예: /settings). /로 시작해야 한다."
           },
           "route": {
             "type": "string",
@@ -57,12 +104,75 @@
             "minimum": 0,
             "description": "네비게이션 후 캡처 전 대기 시간(ms)."
           },
+          "fullPage": {
+            "type": "boolean",
+            "description": "web: 전체 페이지 캡처 여부 (기본 false = viewport만)."
+          },
           "ref": {
             "type": "string",
             "description": "진실의 원천 시안 경로(선택). 런타임 Design Phase에서 확보되므로 config 필수 아님."
           }
         }
+      },
+      "propertyNames": {
+        "pattern": "^[A-Za-z0-9_-]+$"
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "adapter": {
+            "const": "rn-expo"
+          }
+        },
+        "required": [
+          "adapter"
+        ]
+      },
+      "then": {
+        "required": [
+          "scheme"
+        ],
+        "properties": {
+          "screens": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": ["deeplink", "route"]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "adapter": {
+            "const": "web-playwright"
+          }
+        },
+        "required": [
+          "adapter"
+        ]
+      },
+      "then": {
+        "required": [
+          "baseUrl"
+        ],
+        "properties": {
+          "screens": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": [
+                "path"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
 }
