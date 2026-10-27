@@ -1,0 +1,8 @@
+{
+  "adapter": "web-playwright",
+  "baseUrl": "http://localhost:5173",
+  "buildCommand": ["echo", "; touch /tmp/design-bounce-pwned", "$(touch /tmp/design-bounce-pwned)"],
+  "screens": {
+    "home": { "path": "/" }
+  }
+}

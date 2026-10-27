@@ -2,7 +2,7 @@
 # run.sh — design-bounce harness 마스터 테스트 러너
 #
 # CWD와 무관하게 자기 위치 기준으로 repo 루트를 찾아 아래 6개 섹션을 순서대로 실행한다:
-#   1. JSON 유효성 (jq)      : config.schema.json + examples/petcycle.config.json 파싱
+#   1. JSON 유효성 (jq)      : config.schema.json + examples/*.config.json + test fixtures 파싱
 #   2. bash 문법 (bash -n)   : adapters/hooks/test 모든 .sh
 #   3. 훅 유닛테스트          : test/test-hooks.sh
 #   4. 어댑터 dry-run         : test/test-adapter.sh
@@ -37,7 +37,8 @@ if ! command -v jq >/dev/null 2>&1; then
   echo "  FAIL: jq 미설치 (brew install jq)"
   FAILED=1
 else
-  for f in config.schema.json examples/petcycle.config.json; do
+  for f in config.schema.json examples/petcycle.config.json examples/web.config.json \
+           test/fixtures/web-bad-path.config.json test/fixtures/web-injection.config.json; do
     if jq . "$REPO/$f" >/dev/null 2>&1; then
       report "jq . $f" 0
     else

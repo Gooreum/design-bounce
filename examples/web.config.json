@@ -1,0 +1,28 @@
+{
+  "adapter": "web-playwright",
+  "baseUrl": "http://localhost:5173",
+  "viewport": { "width": 1280, "height": 800 },
+  "buildCommand": ["npm", "run", "build"],
+  "devCommand": ["npm", "run", "dev", "--", "--port", "5173", "--strictPort"],
+  "launchTimeoutMs": 30000,
+  "tokens": "src/styles/tokens.css",
+  "captureDir": ".design-bounce/shots",
+  "screens": {
+    "home": {
+      "path": "/",
+      "route": "src/pages/Home.tsx",
+      "settleMs": 600
+    },
+    "settings": {
+      "path": "/settings",
+      "route": "src/pages/Settings.tsx",
+      "settleMs": 600
+    },
+    "pricing": {
+      "path": "/pricing",
+      "route": "src/pages/Pricing.tsx",
+      "settleMs": 600,
+      "fullPage": true
+    }
+  }
+}
